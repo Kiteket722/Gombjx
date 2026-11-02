@@ -1,0 +1,5 @@
+[functions.game]
+verify_jwt = true
+
+[functions.admin]
+verify_jwt = true
