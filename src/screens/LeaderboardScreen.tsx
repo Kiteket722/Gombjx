@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { fetchTopSpenders, SpendingEntry, subscribeToSpending } from "../lib/leaderboardApi";
 import { supabase } from "../lib/supabaseClient";
 import { GoldAmount } from "../components/GoldAmount";
+import { PlayerProfileModal } from "../components/PlayerProfileModal";
 import { RANK_META, computeRankIndex } from "../lib/ranks";
 
 export function LeaderboardScreen() {
   const [entries, setEntries] = useState<SpendingEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<SpendingEntry | null>(null);
 
   const load = () => {
     setError(null);
@@ -59,25 +61,33 @@ export function LeaderboardScreen() {
             const rankIdx = computeRankIndex(entry.xp);
             const rank = RANK_META[rankIdx];
             return (
-              <li key={entry.player_id} className={`leaderboard-row ${index < 3 ? `leaderboard-top-${index + 1}` : ""}`}>
-                <span className="leaderboard-rank">{index + 1}</span>
-                <div className="leaderboard-player">
-                  <span className="leaderboard-name">{entry.display_name}</span>
-                  <span
-                    className="leaderboard-rank-badge"
-                    style={{ color: rank.color, borderColor: rank.color }}
-                  >
-                    {rank.name}
+              <li key={entry.player_id}>
+                <button
+                  type="button"
+                  className={`leaderboard-row ${index < 3 ? `leaderboard-top-${index + 1}` : ""}`}
+                  onClick={() => setSelected(entry)}
+                >
+                  <span className="leaderboard-rank">{index + 1}</span>
+                  <div className="leaderboard-player">
+                    <span className="leaderboard-name">{entry.display_name}</span>
+                    <span
+                      className="leaderboard-rank-badge"
+                      style={{ color: rank.color, borderColor: rank.color }}
+                    >
+                      {rank.name}
+                    </span>
+                  </div>
+                  <span className="leaderboard-total">
+                    <GoldAmount amount={entry.total_spent} />
                   </span>
-                </div>
-                <span className="leaderboard-total">
-                  <GoldAmount amount={entry.total_spent} />
-                </span>
+                </button>
               </li>
             );
           })}
         </ol>
       )}
+
+      {selected && <PlayerProfileModal entry={selected} onClose={() => setSelected(null)} />}
     </section>
   );
 }

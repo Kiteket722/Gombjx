@@ -209,6 +209,19 @@ async function recordSpending(playerId: string, amount: number) {
   if (error) throw error;
 }
 
+async function recordBestDrop(playerId: string, drops: { name: string; value: number; imageKey: string; rarity: string }[]) {
+  if (drops.length === 0) return;
+  const best = drops.reduce((top, drop) => (drop.value > top.value ? drop : top));
+  const { error } = await supabase.rpc("record_player_drop", {
+    p_player_id: playerId,
+    p_name: best.name,
+    p_rarity: best.rarity,
+    p_image_key: best.imageKey,
+    p_value: best.value,
+  });
+  if (error) throw error;
+}
+
 async function loadLoot(playerId: string) {
   const { data, error } = await supabase
     .from("loot_items")
@@ -362,6 +375,7 @@ async function handleOpenCase(body: { token?: unknown; caseKey?: unknown; count?
   if (updateError) throw updateError;
 
   await recordSpending(player.id, totalPrice);
+  await recordBestDrop(player.id, drops);
 
   const refreshed = await loadPlayerById(player.id);
   if (!refreshed) throw new Error("Player disappeared during case opening");
@@ -389,6 +403,7 @@ async function handleOpenFreeCase(body: { token?: unknown }) {
   }
 
   const drop = rollCaseDrop(FREE_CASE_DEF.key, randomInt);
+  await recordBestDrop(player.id, [drop]);
   const { data: found, error: insertError } = await supabase
     .from("loot_items")
     .insert({

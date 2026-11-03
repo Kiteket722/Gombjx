@@ -1969,6 +1969,63 @@ input {
   background: var(--neutral-700);
 }
 
+button.leaderboard-row {
+  width: 100%;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.leaderboard-row:focus-visible {
+  outline: 2px solid var(--primary-400);
+  outline-offset: 2px;
+}
+
+.profile-modal-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+@media (min-width: 480px) {
+  .profile-stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.profile-stat,
+.profile-best-drop {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  background: var(--neutral-800);
+}
+
+.profile-best-drop-body {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-best-drop-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .leaderboard-rank {
   font-family: "Oswald", sans-serif;
   font-size: 20px;

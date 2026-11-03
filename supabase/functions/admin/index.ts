@@ -78,6 +78,12 @@ async function creditDeposit(ticket: TicketRow) {
     .update({ gold: Math.round((player.gold + ticket.amount) * 100) / 100 })
     .eq("id", ticket.player_id);
   if (error) throw error;
+
+  const { error: statsError } = await supabase.rpc("add_player_deposit", {
+    p_player_id: ticket.player_id,
+    p_amount: ticket.amount,
+  });
+  if (statsError) throw statsError;
 }
 
 async function restoreHeldItems(ticket: TicketRow) {

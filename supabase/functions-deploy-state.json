@@ -3,11 +3,11 @@
   "functions": {
     "admin": {
       "hasChanged": false,
-      "hash": "46430d1b1573d04b7fe6d07be08574f598ee803d50ee16ff2733d5c65bd27838"
+      "hash": "6aca6407c211298625e9759b6741f41eb5e32fb1207d852eaf8075434d406468"
     },
     "game": {
       "hasChanged": false,
-      "hash": "102927fab9287e6013252ae7b368743f9762840e1d1017a220bafb118ef8b555"
+      "hash": "ca834265133def7c717683807b9f545db23a002a81d8da972c16135c7fb14f65"
     }
   }
 }
