@@ -12,6 +12,14 @@ import { sounds } from "../lib/sound";
 const CASE_COUNT_OPTIONS = [1, 2, 3] as const;
 const DEFAULT_CASE_COUNT_OPTIONS = [1, 2, 3];
 const PUMPKIN_CASE_COUNT_OPTIONS = [1, 5, 10];
+function openingsWord(count: number) {
+  const lastDigit = count % 10;
+  const lastTwo = count % 100;
+  if (lastDigit === 1 && lastTwo !== 11) return "открытие";
+  if (lastDigit >= 2 && lastDigit <= 4 && (lastTwo < 12 || lastTwo > 14)) return "открытия";
+  return "открытий";
+}
+
 const CASE_COUNT_LABELS: Record<number, string> = {
   1: "1 кейс",
   2: "2 кейса",
@@ -23,12 +31,13 @@ const CASE_COUNT_LABELS: Record<number, string> = {
 type CaseModalProps = {
   caseView: CaseView;
   gold: number;
+  guaranteeRemaining?: number;
   onClose: () => void;
   onUpdate: (state: GameState) => void;
   onRankUp: (rankUp: RankUp) => void;
 };
 
-export function CaseModal({ caseView, gold, onClose, onUpdate, onRankUp }: CaseModalProps) {
+export function CaseModal({ caseView, gold, guaranteeRemaining, onClose, onUpdate, onRankUp }: CaseModalProps) {
   const [phase, setPhase] = useState<CasePhase>("idle");
   const countOptions = caseView.key === "farm-tykvy" ? PUMPKIN_CASE_COUNT_OPTIONS : DEFAULT_CASE_COUNT_OPTIONS;
   const [count, setCount] = useState<number>(1);
@@ -99,6 +108,12 @@ export function CaseModal({ caseView, gold, onClose, onUpdate, onRankUp }: CaseM
             ×
           </button>
         </header>
+
+        {guaranteeRemaining !== undefined && (
+          <p className="guarantee-counter" role="status">
+            Гарантированная лега через <strong>{guaranteeRemaining}</strong> {openingsWord(guaranteeRemaining)}
+          </p>
+        )}
 
         <div className={`case-reel${reelsVisible ? " case-reel-open" : ""}`}>
           <div className="case-reel-inner">

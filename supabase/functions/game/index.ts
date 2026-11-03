@@ -1,5 +1,15 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { CASES, FREE_CASE, FREE_CASE_DEF, findCase, rollCaseDrop } from "./catalog.ts";
+import {
+  CASES,
+  type CaseDrop,
+  FREE_CASE,
+  FREE_CASE_DEF,
+  GUARANTEE_LENGTH,
+  GUARANTEE_RARITY,
+  GUARANTEE_RESET_RARITIES,
+  findCase,
+  rollCaseDrop,
+} from "./catalog.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -222,6 +232,42 @@ async function recordBestDrop(playerId: string, drops: { name: string; value: nu
   if (error) throw error;
 }
 
+async function loadGuaranteeMisses(playerId: string, caseKey: string): Promise<number> {
+  const { data, error } = await supabase
+    .from("player_case_guarantees")
+    .select("misses")
+    .eq("player_id", playerId)
+    .eq("case_key", caseKey)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.misses ?? 0;
+}
+
+async function saveGuaranteeMisses(playerId: string, caseKey: string, misses: number) {
+  const { error } = await supabase
+    .from("player_case_guarantees")
+    .upsert(
+      { player_id: playerId, case_key: caseKey, misses, updated_at: new Date().toISOString() },
+      { onConflict: "player_id,case_key" },
+    );
+  if (error) throw error;
+}
+
+async function loadGuarantees(playerId: string): Promise<Record<string, number>> {
+  const { data, error } = await supabase
+    .from("player_case_guarantees")
+    .select("case_key, misses")
+    .eq("player_id", playerId);
+  if (error) throw error;
+  const missesByCase = new Map((data ?? []).map((row) => [row.case_key, row.misses]));
+  return Object.fromEntries(
+    CASES.filter((caseView) => caseView.guaranteed).map((caseView) => [
+      caseView.key,
+      GUARANTEE_LENGTH - (missesByCase.get(caseView.key) ?? 0),
+    ]),
+  );
+}
+
 async function loadLoot(playerId: string) {
   const { data, error } = await supabase
     .from("loot_items")
@@ -233,8 +279,9 @@ async function loadLoot(playerId: string) {
 }
 
 async function buildState(player: Player) {
-  const [loot, ticketsRes] = await Promise.all([
+  const [loot, guarantees, ticketsRes] = await Promise.all([
     loadLoot(player.id),
+    loadGuarantees(player.id),
     supabase
       .from("deal_tickets")
       .select("id, number, kind, currency, nickname, location, telegram, phone, bank, deal_time, amount, rub_amount, status, is_premium, created_at")
@@ -253,6 +300,7 @@ async function buildState(player: Player) {
     serverTime: new Date().toISOString(),
     xp: player.xp,
     rank: computeRank(player.xp),
+    guarantees,
     loot,
     tickets: ticketsRes.data,
     cases: CASES,
@@ -328,7 +376,15 @@ async function handleOpenCase(body: { token?: unknown; caseKey?: unknown; count?
   const totalPrice = roundGold(caseView.price * count);
   if (player.gold < totalPrice) throw new BadRequest("Недостаточно голды для открытия кейсов.");
 
-  const drops = Array.from({ length: count }, () => rollCaseDrop(caseView.key, randomInt));
+  const guaranteed = caseView.guaranteed;
+  let misses = guaranteed ? await loadGuaranteeMisses(player.id, caseView.key) : 0;
+  const drops: CaseDrop[] = [];
+  for (let opened = 0; opened < count; opened++) {
+    const forced = guaranteed && misses >= GUARANTEE_LENGTH - 1;
+    const drop = rollCaseDrop(caseView.key, randomInt, forced ? GUARANTEE_RARITY : undefined);
+    drops.push(drop);
+    if (guaranteed) misses = GUARANTEE_RESET_RARITIES.includes(drop.rarity) ? 0 : misses + 1;
+  }
   const isAutoSold = (drop: { imageKey: string }) => drop.imageKey === AUTO_SOLD_BERRY_KEY;
   const autoSoldGold = roundGold(sumValues(drops.filter(isAutoSold)));
   let keptRows: Record<string, unknown>[] = [];
@@ -374,6 +430,7 @@ async function handleOpenCase(body: { token?: unknown; caseKey?: unknown; count?
     .eq("id", player.id);
   if (updateError) throw updateError;
 
+  if (guaranteed) await saveGuaranteeMisses(player.id, caseView.key, misses);
   await recordSpending(player.id, totalPrice);
   await recordBestDrop(player.id, drops);
 

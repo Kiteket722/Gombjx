@@ -110,6 +110,7 @@ export function CasesScreen({ state, onUpdate, onRankUp }: CasesScreenProps) {
           key={openCaseView.key}
           caseView={openCaseView}
           gold={state.gold}
+          guaranteeRemaining={openCaseView.guaranteed ? state.guarantees[openCaseView.key] : undefined}
           onClose={() => setOpenKey(null)}
           onUpdate={onUpdate}
           onRankUp={onRankUp}

@@ -42,6 +42,7 @@ export type CaseView = {
   price: number;
   category: "free" | "main" | "named";
   available: boolean;
+  guaranteed: boolean;
   items: CaseItem[];
 };
 
@@ -98,6 +99,7 @@ export type GameState = {
   tickets: DealTicket[];
   cases: CaseView[];
   freeCase: CaseView;
+  guarantees: Record<string, number>;
 };
 
 export type ContractInput = {

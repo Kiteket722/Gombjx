@@ -6,6 +6,10 @@ const LEVEL_MULTIPLIERS = [1, 1.5, 2, 3, 4.5];
 const UPGRADE_CHANCE_MIN = 0.1;
 const UPGRADE_CHANCE_MAX = 0.5;
 const REFERENCE_PRICE = 1000;
+export const GUARANTEE_LENGTH = 20;
+export const GUARANTEE_MIN_PRICE = 50;
+export const GUARANTEE_RARITY: Rarity = "legendary";
+export const GUARANTEE_RESET_RARITIES: Rarity[] = ["epic", "mythic", "legendary", "unique"];
 
 type FixedPriceItem = { key: string; name: string; rarity: Rarity; basePrice: number };
 type RandomPriceItem = { key: string; name: string; rarity: Rarity; priceRange: { min: number; max: number } };
@@ -170,6 +174,7 @@ export type CaseView = {
   price: number;
   category: "free" | "main" | "named";
   available: boolean;
+  guaranteed: boolean;
   items: CaseItem[];
 };
 
@@ -225,6 +230,7 @@ function buildCase(def: CaseDef): CaseView {
     price: def.price,
     category: def.category,
     available: def.available ?? true,
+    guaranteed: def.price > GUARANTEE_MIN_PRICE && items.some((item) => item.rarity === GUARANTEE_RARITY),
     items,
   };
 }
@@ -243,14 +249,18 @@ function rollRandomPrice(range: { min: number; max: number }, randomInt: (max: n
   return (minCents + randomInt(spanCents)) / 100;
 }
 
-export function rollCaseDrop(caseKey: string, randomInt: (max: number) => number): CaseDrop {
+export function rollCaseDrop(caseKey: string, randomInt: (max: number) => number, forcedRarity?: Rarity): CaseDrop {
   const def = CASE_DEFS.find((candidate) => candidate.key === caseKey) ??
     (caseKey === FREE_CASE_DEF.key ? FREE_CASE_DEF : undefined);
   if (!def) throw new Error(`Case not found: ${caseKey}`);
-  const itemRoll = randomInt(100);
+  const entries = forcedRarity
+    ? Object.entries(def.weights).filter(([key]) => ITEM_BY_KEY.get(key)!.rarity === forcedRarity)
+    : Object.entries(def.weights);
+  const weightTotal = forcedRarity ? entries.reduce((sum, [, weight]) => sum + weight, 0) : 100;
+  const itemRoll = randomInt(weightTotal);
   let cumulative = 0;
-  let selectedKey = Object.keys(def.weights)[0];
-  for (const [key, weight] of Object.entries(def.weights)) {
+  let selectedKey = entries[0][0];
+  for (const [key, weight] of entries) {
     cumulative += weight;
     if (itemRoll < cumulative) {
       selectedKey = key;

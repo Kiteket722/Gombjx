@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { SpendingEntry } from "../lib/leaderboardApi";
 import { fetchPlayerStats, PlayerStats } from "../lib/playerProfileApi";
-import { computeRankIndex, RANK_META } from "../lib/ranks";
+import { computeRankIndex, RANK_META, RANK_THRESHOLDS } from "../lib/ranks";
 import { RARITY_INFO } from "../lib/rarity";
 import { GoldAmount } from "./GoldAmount";
 import { ItemThumb } from "./ItemThumb";
@@ -15,7 +15,12 @@ export function PlayerProfileModal({ entry, onClose }: PlayerProfileModalProps) 
   const [stats, setStats] = useState<PlayerStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const rank = RANK_META[computeRankIndex(entry.xp)];
+  const rankIndex = computeRankIndex(entry.xp);
+  const rank = RANK_META[rankIndex];
+  const isMaxRank = rankIndex === RANK_META.length - 1;
+  const currentThreshold = RANK_THRESHOLDS[rankIndex];
+  const nextThreshold = RANK_THRESHOLDS[rankIndex + 1];
+  const progressPct = isMaxRank ? 100 : ((entry.xp - currentThreshold) / (nextThreshold - currentThreshold)) * 100;
 
   const load = () => {
     setLoading(true);
@@ -53,7 +58,14 @@ export function PlayerProfileModal({ entry, onClose }: PlayerProfileModalProps) 
             {rank.name}
           </span>
         </div>
-        <p className="hint">Опыт: {entry.xp}</p>
+        <div className="profile-xp">
+          <div className="rank-progress-bar">
+            <div className="rank-progress-fill" style={{ width: `${progressPct}%`, background: rank.gradient }} />
+          </div>
+          <span className="rank-xp-text">
+            {isMaxRank ? `${entry.xp} XP` : `${entry.xp} / ${nextThreshold} XP`}
+          </span>
+        </div>
 
         {loading && <p className="loading-text">Загрузка профиля...</p>}
 
