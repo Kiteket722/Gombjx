@@ -97,7 +97,7 @@ export default function App() {
           >
             {menuOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
           </button>
-          <span className="brand">Zombix</span>
+          <span className="brand pixel-brand">GGZOMBIX</span>
           <div className="header-end">
             {state && (
               <span className="gold-badge">

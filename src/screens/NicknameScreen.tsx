@@ -29,7 +29,7 @@ export function NicknameScreen({ onSaved }: NicknameScreenProps) {
   return (
     <div className="nickname-screen">
       <form className="panel nickname-card" onSubmit={handleSubmit}>
-        <h1 className="page-title">Добро пожаловать в Zombix</h1>
+        <h1 className="page-title pixel-welcome">GGZOMBIX</h1>
         <p className="page-subtitle">
           Придумайте ник. Он будет виден в таблице лидеров. Изменить его потом нельзя.
         </p>

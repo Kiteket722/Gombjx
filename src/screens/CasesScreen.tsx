@@ -66,7 +66,7 @@ export function CasesScreen({ state, onUpdate, onRankUp }: CasesScreenProps) {
     <section className="cases-screen">
       <div className="hero" style={{ backgroundImage: `url(${HERO_IMAGE})` }}>
         <div className="hero-overlay">
-          <span className="eyebrow">Zombix</span>
+          <span className="eyebrow pixel-brand">GGZOMBIX</span>
           <h1 className="hero-title">Кейсы</h1>
           <p className="hero-subtitle">Открывайте кейсы за голду и выбивайте редкие награды</p>
         </div>
