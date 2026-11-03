@@ -10,15 +10,16 @@ import { NicknameScreen } from "./screens/NicknameScreen";
 import { ProfileScreen } from "./screens/ProfileScreen";
 import { GoldAmount } from "./components/GoldAmount";
 import { RankUpOverlay } from "./components/RankUpOverlay";
+import { Menu, X } from "lucide-react";
 
 type Tab = "cases" | "inventory" | "contract" | "leaderboard" | "profile";
 
-const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: "cases", label: "Кейсы", icon: "🧰" },
-  { id: "inventory", label: "Инвентарь", icon: "🎒" },
-  { id: "contract", label: "Контракт", icon: "📝" },
-  { id: "leaderboard", label: "Таблица лидеров", icon: "🏆" },
-  { id: "profile", label: "Профиль", icon: "🧍" },
+const TABS: { id: Tab; label: string }[] = [
+  { id: "cases", label: "Кейсы" },
+  { id: "inventory", label: "Инвентарь" },
+  { id: "contract", label: "Контракт" },
+  { id: "leaderboard", label: "Лучшие" },
+  { id: "profile", label: "Профиль" },
 ];
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
   const [adminToken, setAdminToken] = useState<string | null>(getAdminSession);
   const [muted, setMuted] = useState<boolean>(isSoundMuted);
   const [rankUp, setRankUp] = useState<RankUp | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const [banned, setBanned] = useState(false);
 
@@ -53,6 +55,7 @@ export default function App() {
 
   const selectTab = (next: Tab) => {
     setTab(next);
+    setMenuOpen(false);
     if (next === "profile") load();
   };
 
@@ -85,22 +88,16 @@ export default function App() {
     <div className="app">
       <header className="site-header">
         <div className="container header-inner">
+          <button
+            type="button"
+            className="menu-toggle icon-button"
+            aria-label={menuOpen ? "Закрыть меню" : "Открыть меню"}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            {menuOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
+          </button>
           <span className="brand">Zombix</span>
-          <nav className="tabs" aria-label="Разделы">
-            {TABS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                title={item.label}
-                aria-label={item.label}
-                aria-current={tab === item.id ? "page" : undefined}
-                className={`tab ${tab === item.id ? "tab-active" : ""}`}
-                onClick={() => selectTab(item.id)}
-              >
-                <span className="tab-icon" aria-hidden="true">{item.icon}</span>
-              </button>
-            ))}
-          </nav>
           <div className="header-end">
             {state && (
               <span className="gold-badge">
@@ -126,6 +123,38 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {menuOpen && (
+        <>
+          <button
+            type="button"
+            className="menu-backdrop"
+            aria-label="Закрыть меню"
+            onClick={() => setMenuOpen(false)}
+          />
+          <aside className="side-menu" aria-label="Навигация">
+            <div className="side-menu-header">
+              <span className="side-menu-title">Разделы</span>
+              <button type="button" className="icon-button" aria-label="Закрыть меню" onClick={() => setMenuOpen(false)}>
+                <X size={20} aria-hidden="true" />
+              </button>
+            </div>
+            <nav className="side-menu-nav">
+              {TABS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`side-menu-item ${tab === item.id ? "side-menu-item-active" : ""}`}
+                  aria-current={tab === item.id ? "page" : undefined}
+                  onClick={() => selectTab(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+          </aside>
+        </>
+      )}
 
       <main className="container main">
         {loadError && (
